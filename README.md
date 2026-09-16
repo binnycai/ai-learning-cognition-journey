@@ -2,6 +2,8 @@
 
 > 一次关于 AI、认知错觉、实践与产出的思考实验。
 
+**[→ 打开 3D 交互模型](https://binnycai.github.io/ai-learning-cognition-journey/ai-3d-model.html)**（可拖动旋转观察）
+
 这个项目来自一个很简单的问题：
 
 **为什么现在使用 AI、学习 AI、讨论 AI 的人越来越多，但真正能够持续产生高质量成果的人却依然很少？**
