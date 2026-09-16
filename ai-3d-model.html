@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>为什么学 AI 的人很多，做出成果的人很少</title>
+<meta name="description" content="一个三维模型：投入量、闭环度、本行功底。可以拖动旋转。">
+<meta property="og:title" content="为什么学 AI 的人很多，做出成果的人很少">
+<meta property="og:description" content="一个三维模型：投入量、闭环度、本行功底。可以拖动旋转。">
+<style>
+:root{--bg:#f4f6f7;--card:#ffffff;--ink:#1b2226;--ink2:#4d575c;--ink3:#8a9398;--grid:#d5dbde;--line:#c3cbcf;--open:#d9582e;--closed:#128066;--out:#8a9398;--accent:#128066}
+@media (prefers-color-scheme:dark){:root{--bg:#111618;--card:#192023;--ink:#e6ebed;--ink2:#b3bcc0;--ink3:#7d878c;--grid:#2b3337;--line:#3a4448;--open:#e8704a;--closed:#2fa488;--out:#7d878c;--accent:#2fa488}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:560px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:24px;line-height:1.35;font-weight:600;margin:0 0 8px}
+.sub{font-size:15px;line-height:1.7;color:var(--ink2);margin:0 0 20px}
+.views{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+button{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.on{border-color:var(--accent);color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage{position:relative;width:100%;height:360px;background:var(--card);border-radius:12px;touch-action:none;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;right:10px;top:8px;font-size:12px;color:var(--ink3);pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink2);margin:10px 0 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.info{margin-top:12px;background:var(--card);border-radius:12px;padding:14px 16px;min-height:120px}
+.info b{display:block;font-size:16px;font-weight:600;margin-bottom:2px}
+.info small{display:block;font-size:12px;color:var(--ink3);margin-bottom:6px}
+.info p{margin:0;font-size:15px;line-height:1.7;color:var(--ink2)}
+h2{font-size:17px;font-weight:600;margin:30px 0 8px}
+.txt p{font-size:15px;line-height:1.8;color:var(--ink2);margin:0 0 12px}
+.txt strong{color:var(--ink);font-weight:600}
+.last{font-size:17px;line-height:1.7;color:var(--ink);margin:0}
+.note{font-size:12px;color:var(--ink3);margin-top:26px;line-height:1.6}
+@media (prefers-reduced-motion:reduce){.hint{display:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>为什么学 AI 的人很多，做出成果的人很少</h1>
+<p class="sub">把 AI 使用者放进三个维度里看：投入量、闭环度、本行功底。拖动图表可以旋转，点一个点可以看这类人的说明。</p>
+
+<div class="views">
+<button class="vb" data-y="0.6" data-p="-0.35">斜着看</button>
+<button class="vb" data-y="0" data-p="0">正面：原二维矩阵</button>
+<button class="vb" data-y="1.5708" data-p="0">侧面：功底×闭环</button>
+<button class="vb" data-y="0" data-p="-1.5707">俯视：投入×功底</button>
+</div>
+
+<div class="stage" id="stage">
+<canvas id="cv" role="img" aria-label="可旋转的三维散点图，展示九类 AI 使用者在投入量、闭环度、本行功底三个维度上的示意位置"></canvas>
+<span class="hint">拖动旋转</span>
+</div>
+
+<div class="legend">
+<span><i style="background:var(--open)"></i>开环</span>
+<span><i style="background:var(--closed)"></i>有闭环</span>
+<span><i style="background:var(--out)"></i>场外</span>
+<span>点越大，真实产出越高</span>
+<span>实线是闭环路线，虚线是开环路线</span>
+</div>
+
+<div class="tools">
+<button id="pt">隐藏路线</button>
+<button id="ar">自动旋转</button>
+</div>
+
+<div class="info" aria-live="polite">
+<b id="cn"></b><small id="cc"></small><p id="cd"></p>
+</div>
+
+<div class="txt">
+<h2>三个轴是什么</h2>
+<p><strong>投入量</strong>：看教程、学工具、收藏 Prompt、让 AI 生成东西，花在 AI 上的一切动静。便宜，看得见，涨得快。</p>
+<p><strong>闭环度</strong>：用 AI 做出来的东西，有多少被现实检验过（真用上了、跑通了、有人买单、被查出了错），并且据此改了做法。贵，看不见，涨得慢。</p>
+<p><strong>本行功底</strong>：不靠 AI，你自己能不能看出这件事做得好不好。</p>
+
+<h2>怎么看这张图</h2>
+<p>先点"正面"。这就是只看投入和闭环的二维图，右下角的几类人挤在一起，分不开。</p>
+<p>再点"侧面"，它们沿着功底轴拉开了。专家的自满和批量生成者都不检验，但一个是没去查，一个是查不出，解决办法也不一样。</p>
+<p>最后看两条路线。虚线只往右走，投入涨了，位置其实没变。实线往上走的同时功底也在涨：闭环会反过来把功底养起来。</p>
+
+<h2>一句话</h2>
+<p class="last">往右走很容易。往上走只有一个办法：让现实检验你的产出。</p>
+</div>
+
+<p class="note">图中位置和点的大小是示意，表达的是相对关系，不是测量数据。</p>
+</main>
+
+<script>
+(function(){
+var P=[
+{n:'旁观者',p:[2,1,4],o:.5,c:'g',d:'只看不做。功底高的、低的都有，这里取中间。产出接近零。'},
+{n:'浅尝退出者',p:[3,1.5,6],o:1,c:'g',d:'试过几次就走。功底不低的人也常在这里：一眼看出 AI 错了，就不再给第二次机会。'},
+{n:'收藏型学习者',p:[8,2,3],o:1.5,c:'c',d:'输入很多，功底偏浅。看得懂教程，却分不清 AI 给的东西好不好。'},
+{n:'批量生成者',p:[9,1.5,2],o:2,c:'c',d:'功底浅又不检验。东西看起来对，自己查不出错，问题留给下游。'},
+{n:'专家的自满',p:[8,2.5,8.5],o:3.5,c:'c',d:'功底强、用得多，却不检验。不是查不出错，是没去查。正面看它和批量生成者挤在一起，转到侧面才分得开。'},
+{n:'局部精耕者',p:[3,7,8],o:4,c:'t',d:'只在自己懂行的地方用，靠功底逐句把关。产出真，范围窄。'},
+{n:'硬闯的新手',p:[6,6.5,2.5],o:3,c:'t',d:'功底浅，但坚持拿外部现实检验：跑一下、发出去、看反馈。走得慢，功底会被闭环慢慢养起来。'},
+{n:'校准迭代者',p:[7,7,5.5],o:5,c:'t',d:'来回改、记录出错点、设计检验办法。产出有波动，但每份都比较真。'},
+{n:'杠杆者',p:[9,9,8.5],o:9,c:'t',d:'功底、投入、闭环都高，检验嵌在流程里，沉淀持续复利。'}
+];
+var PATHS=[{k:'t',dash:[],pts:[[3,1.5,2],[6,6.5,2.5],[7,7,5.5],[9,9,8.5]]},{k:'c',dash:[5,4],pts:[[3,1.5,2],[6,2,2],[9,1.5,2]]}];
+var FF=getComputedStyle(document.body).fontFamily||'sans-serif';
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+var W=320,H=360,yaw=0.6,pitch=-0.35,ty=0.6,tp=-0.35,sel=-1,showPath=true,auto=false,dirty=true,drag=null,K={};
+
+function readColors(){var s=getComputedStyle(document.documentElement);var g=function(n){return s.getPropertyValue(n).trim();};
+K={ink:g('--ink'),ink2:g('--ink2'),ink3:g('--ink3'),grid:g('--grid'),card:g('--card'),t:g('--closed'),c:g('--open'),g:g('--out')};dirty=true;}
+function size(){var r=stage.getBoundingClientRect(),d=window.devicePixelRatio||1;W=r.width;H=r.height;cv.width=Math.round(W*d);cv.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);dirty=true;}
+function proj(v){var x=(v[0]-5)/5,y=(v[1]-5)/5,z=(v[2]-5)/5;var cy=Math.cos(yaw),sy=Math.sin(yaw);var x1=x*cy+z*sy,z1=-x*sy+z*cy;var cp=Math.cos(pitch),sp=Math.sin(pitch);var y1=y*cp-z1*sp,z2=y*sp+z1*cp;var s=Math.min(W,H)*0.3,f=6/(6+z2);return[W/2+x1*s*f,H/2-y1*s*f,z2];}
+function seg(a,b){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+function head(a,b,col){if(Math.hypot(b[0]-a[0],b[1]-a[1])<14)return;var x=a[0]+(b[0]-a[0])*0.6,y=a[1]+(b[1]-a[1])*0.6,g=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x+Math.cos(g)*7,y+Math.sin(g)*7);ctx.lineTo(x+Math.cos(g+2.5)*6,y+Math.sin(g+2.5)*6);ctx.lineTo(x+Math.cos(g-2.5)*6,y+Math.sin(g-2.5)*6);ctx.closePath();ctx.fill();}
+function rad(o){return 4+o*1.1;}
+function overlaps(list,x,y,w,h){for(var i=0;i<list.length;i++){var q=list[i];if(x<q[0]+q[2]&&x+w>q[0]&&y<q[1]+q[3]&&y+h>q[1])return true;}return false;}
+
+function draw(){
+ctx.clearRect(0,0,W,H);var placed=[];
+var C=[[0,0,0],[10,0,0],[10,10,0],[0,10,0],[0,0,10],[10,0,10],[10,10,10],[0,10,10]];
+var E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+ctx.setLineDash([]);ctx.lineWidth=1;ctx.strokeStyle=K.grid;
+E.forEach(function(e){seg(proj(C[e[0]]),proj(C[e[1]]));});
+var o=proj([0,0,0]);ctx.strokeStyle=K.ink3;ctx.lineWidth=1.5;
+var AX=[[[10,0,0],[11.6,0,0],'投入量'],[[0,10,0],[0,11.3,0],'闭环度'],[[0,0,10],[0,0,11.6],'本行功底']];
+ctx.font='12px '+FF;ctx.textAlign='center';ctx.textBaseline='middle';
+AX.forEach(function(a){var b=proj(a[0]);seg(o,b);if(Math.hypot(b[0]-o[0],b[1]-o[1])<60)return;var l=proj(a[1]);var w=ctx.measureText(a[2]).width;var lx=Math.min(Math.max(l[0],w/2+4),W-w/2-4),ly=Math.min(Math.max(l[1],10),H-10);ctx.fillStyle=K.ink3;ctx.fillText(a[2],lx,ly);placed.push([lx-w/2,ly-7,w,14]);});
+if(showPath){
+PATHS.forEach(function(pa){var pp=pa.pts.map(proj),col=K[pa.k];ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash(pa.dash);for(var i=0;i<pp.length-1;i++)seg(pp[i],pp[i+1]);ctx.setLineDash([]);for(var j=0;j<pp.length-1;j++)head(pp[j],pp[j+1],col);});
+var s0=proj([3,1.5,2]);ctx.strokeStyle=K.ink3;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(s0[0],s0[1],4,0,7);ctx.stroke();
+}
+var pr=P.map(function(q,i){var s=proj(q.p);return{i:i,x:s[0],y:s[1],z:s[2],r:rad(q.o)};});
+pr.slice().sort(function(a,b){return b.z-a.z;}).forEach(function(s){var q=P[s.i];
+ctx.beginPath();ctx.arc(s.x,s.y,s.r+2,0,7);ctx.fillStyle=K.card;ctx.fill();
+ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fillStyle=K[q.c];ctx.fill();
+if(s.i===sel){ctx.beginPath();ctx.arc(s.x,s.y,s.r+5,0,7);ctx.strokeStyle=K.ink;ctx.lineWidth=1.5;ctx.stroke();}
+placed.push([s.x-s.r,s.y-s.r,s.r*2,s.r*2]);});
+ctx.font='12px '+FF;ctx.textAlign='left';ctx.textBaseline='top';
+pr.slice().sort(function(a,b){return((b.i===sel)-(a.i===sel))||(P[b.i].o-P[a.i].o);}).forEach(function(s){
+var t=P[s.i].n,w=ctx.measureText(t).width,h=14,r=s.r;
+var cand=[[s.x+r+4,s.y-h/2],[s.x-r-4-w,s.y-h/2],[s.x-w/2,s.y-r-4-h],[s.x-w/2,s.y+r+3],[s.x+r+2,s.y-r-h],[s.x+r+2,s.y+r],[s.x-r-2-w,s.y-r-h],[s.x-r-2-w,s.y+r]];
+for(var k=0;k<cand.length;k++){var lx=cand[k][0],ly=cand[k][1];
+if(lx<2||lx+w>W-2||ly<2||ly+h>H-2)continue;if(overlaps(placed,lx,ly,w,h))continue;
+placed.push([lx,ly,w,h]);ctx.fillStyle=s.i===sel?K.ink:K.ink2;ctx.fillText(t,lx,ly);break;}
+});
+}
+
+function tick(){
+if(auto&&!drag){ty+=0.006;}
+var dy=ty-yaw,dp=tp-pitch;
+if(Math.abs(dy)>1e-4||Math.abs(dp)>1e-4){yaw+=dy*0.15;pitch+=dp*0.15;dirty=true;}
+if(dirty){draw();dirty=false;}
+requestAnimationFrame(tick);
+}
+
+var lv=function(v){return v<3.5?'低':v<6.5?'中':'高';};
+function pick(i){sel=i;var q=P[i];
+document.getElementById('cn').textContent=q.n;
+document.getElementById('cc').textContent='投入'+lv(q.p[0])+'，闭环'+lv(q.p[1])+'，功底'+lv(q.p[2])+'，真实产出'+lv(q.o);
+document.getElementById('cd').textContent=q.d;dirty=true;}
+
+function hit(cx,cy){var r=cv.getBoundingClientRect(),mx=cx-r.left,my=cy-r.top,best=-1,bd=24;
+P.forEach(function(q,i){var s=proj(q.p),d=Math.hypot(s[0]-mx,s[1]-my)-rad(q.o);if(d<bd){bd=d;best=i;}});
+if(best>=0)pick(best);}
+function start(x,y){drag={x:x,y:y,m:0};}
+function move(x,y){var dx=x-drag.x,dy=y-drag.y;drag.m+=Math.abs(dx)+Math.abs(dy);drag.x=x;drag.y=y;
+yaw+=dx*0.01;ty=yaw;pitch=Math.max(-1.5707,Math.min(1.5707,pitch-dy*0.01));tp=pitch;dirty=true;}
+function end(x,y){if(drag&&drag.m<6)hit(x,y);drag=null;}
+
+cv.addEventListener('mousedown',function(e){start(e.clientX,e.clientY);});
+window.addEventListener('mousemove',function(e){if(drag)move(e.clientX,e.clientY);});
+window.addEventListener('mouseup',function(e){if(drag)end(e.clientX,e.clientY);});
+cv.addEventListener('touchstart',function(e){var t=e.touches[0];start(t.clientX,t.clientY);},{passive:true});
+cv.addEventListener('touchmove',function(e){if(!drag)return;e.preventDefault();var t=e.touches[0];move(t.clientX,t.clientY);},{passive:false});
+cv.addEventListener('touchend',function(e){if(!drag)return;var t=e.changedTouches[0];e.preventDefault();end(t.clientX,t.clientY);},{passive:false});
+
+var vbs=Array.prototype.slice.call(document.querySelectorAll('.vb'));
+function act(b){vbs.forEach(function(x){x.classList.remove('on');});b.classList.add('on');}
+vbs.forEach(function(b){b.addEventListener('click',function(){
+auto=false;document.getElementById('ar').textContent='自动旋转';
+var y=parseFloat(b.dataset.y);ty=y+2*Math.PI*Math.round((yaw-y)/(2*Math.PI));tp=parseFloat(b.dataset.p);act(b);});});
+act(vbs[0]);
+
+document.getElementById('pt').addEventListener('click',function(e){showPath=!showPath;e.target.textContent=showPath?'隐藏路线':'显示路线';dirty=true;});
+document.getElementById('ar').addEventListener('click',function(e){auto=!auto;e.target.textContent=auto?'停止旋转':'自动旋转';if(auto){tp=-0.35;vbs.forEach(function(x){x.classList.remove('on');});}});
+
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+if(mq){if(mq.addEventListener)mq.addEventListener('change',readColors);else if(mq.addListener)mq.addListener(readColors);}
+window.addEventListener('resize',size);
+readColors();size();pick(4);tick();
+})();
+</script>
+</body>
+</html>
